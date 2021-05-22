@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  web:
+    build: ./api
+    # -bを省略するとホストからコンテナにアクセスできない
+    # -b 0.0.0.0を指定することで、コンテナが持つ全てのインターフェースでlistenできるようになるため、ホスト側からコンテナにアクセスできるようになる
+    command: bundle exec rails s -p 3000 -b '0.0.0.0'
+    ports:
+      - '3000:3000'
+    depends_on:
+      - postgres
+    volumes:
+      - ./api:/app
+      - bundle:/usr/local/bundle
+    tty: true
+    stdin_open: true
+    env_file:
+      - .env
+
+  postgres:
+    image: postgres:12.1
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - '3306:3306'
+
+  front:
+    build: ./front
+    volumes:
+      - ./front:/app
+    ports:
+      - '8080:8080'
+    tty: true
+    stdin_open: true
+    command: npm run serve
+
+volumes:
+  postgres:
+  # bundleをマウントすることでGemの追加がdocker-compose run api bundle installで済む
+  bundle:
